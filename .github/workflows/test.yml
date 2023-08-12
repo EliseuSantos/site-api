@@ -1,0 +1,41 @@
+name: Test Code
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  test-code:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [20]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setting Up Pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setting Up Node
+        uses: actions/setup-node@v3
+        with:
+          cache: pnpm
+          node-version: ${{ matrix.node-version }}
+
+      - name: Installing Project Dependencies
+        run: pnpm install
+
+      - name: Building Project
+        run: pnpm build
+
+      - name: Running Test
+        run: pnpm test
+        env:
+          CLUSTERING: false
+          PORT: 3000

@@ -1,0 +1,50 @@
+name: Update Swagger API Schema
+
+on:
+  workflow_run:
+    workflows:
+      - Merge to Main Branch
+    types:
+      - completed
+
+jobs:
+  update-swagger-api-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setting Up Pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setting Up Node
+        uses: actions/setup-node@v3
+        with:
+          cache: pnpm
+          node-version: 20
+
+      - name: Installing Project Dependencies
+        run: pnpm install
+
+      - name: Exporting API JSON
+        run: pnpm swagger
+        env:
+          NODE_ENV: production
+          CLUSTERING: false
+          PORT: 3000
+
+      - name: Updating API Documentation
+        uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        with:
+          commit_message: 'docs: update schema'
+          destination_branch: docs/swagger
+          destination_folder: /
+          destination_repo: ${{ github.repository }}
+          source_file: swagger.json
+          user_email: github-actions[bot]@users.noreply.github.com
+          user_name: github-actions[bot]
